@@ -6,22 +6,21 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.graphics.Color
+import android.os.Environment
 import java.io.BufferedReader
 import java.io.File
 
 import android.view.View
+import androidx.core.content.ContentProviderCompat.requireContext
 import java.lang.StringBuilder
 import kotlin.coroutines.coroutineContext
 
 fun getNotZeroLong(value: Long) : Long {
-    if (value != 0L)
-        return value
-    else
-        return 1
+    return value.coerceIn(1, value + 1)
 }
 
 fun getStateString(wordsLearned: Int, date: Long) : String{
-    return "words: " + wordsLearned.toString() + " | avg per day: " + (wordsLearned.toLong() / ((getNotZeroLong(System.currentTimeMillis() - date)) / 1000 / 60 / 60 / 24)).toString()
+    return "words: " + wordsLearned.toString() + " | avg per day: " + (wordsLearned.toLong() / getNotZeroLong((System.currentTimeMillis() - date) / 1000 / 60 / 60 / 24)).toString()
 }
 
 fun getListNumOf(list : ArrayList<Int>, target: Int) : Int {
@@ -103,7 +102,6 @@ class dicPage {
                     stringButtonsData.append(state.toString() + "\n".toString())
                 }
                 fileButtonsStates.writeBytes(stringButtonsData.toString().toByteArray())
-                //buttonStat.setText(getStateString(getListNumOf(dicButtonsStates, 1), getNotZeroLong(dateStarted)))
             }
 
             linesAdded += 1
@@ -175,7 +173,6 @@ class MainActivity : AppCompatActivity() /*, com.example.lenera.OnScrollChangeLi
         actionBar?.hide()
         setContentView(R.layout.activity_main)
 
-
         // INITIALIZATION
         val scrollBox = findViewById<LinearLayout>(R.id.ScrollBox)
         val buttonStat = findViewById<Button>(R.id.buttonStat)
@@ -190,6 +187,10 @@ class MainActivity : AppCompatActivity() /*, com.example.lenera.OnScrollChangeLi
 
         //get buttons pressed states from file or create new if doesn't exists
         val fileButtonsData = File(applicationContext.filesDir, "ButtonsData.txt")
+        //
+        //fileButtonsData.reader().readText()
+        //fileButtonsData.writeBytes(stringButtonsData.toString().toByteArray())
+        //
         val buttonsState: ArrayList<Int> = ArrayList()
         if (!(fileButtonsData.exists())) {
             val stringButtonsData = StringBuilder()
@@ -211,16 +212,18 @@ class MainActivity : AppCompatActivity() /*, com.example.lenera.OnScrollChangeLi
             }
         }
 
-        // create dictionary page
         var dictPage = dicPage()
         dictPage.setDictionaries(dicEn, dicRu, buttonsState)
         dictPage.addWords(scrollBox, this)
         dictPage.setStatesFile(fileButtonsData)
-        //dictPage.setStatButtonAndDate(buttonStat, getNotZeroLong((fileDate.lastModified()) / 1000 / 60 / 60 / 24))
 
         //set stat button color
         buttonStat.setBackgroundColor(dictPage.colorBackPressed)
         buttonStat.setTextColor(dictPage.colorTextPressed)
+
+        //buttonsState
+        getListNumOf(buttonsState, 1)
+
         buttonStat.setText(getStateString(getListNumOf(buttonsState, 1), getNotZeroLong((fileDate.lastModified()))))
 
         var scrollObject = findViewById<ScrollView>(R.id.BaseScrollView)
